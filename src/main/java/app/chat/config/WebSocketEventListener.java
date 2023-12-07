@@ -22,7 +22,6 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent disconnectEvent) {
-        System.out.println("WebSocked Disconnect Event Fired");
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(disconnectEvent.getMessage());
         String username = Objects.requireNonNull(headerAccessor.getSessionAttributes()).get("username").toString();
 
