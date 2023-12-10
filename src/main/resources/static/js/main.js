@@ -36,10 +36,12 @@ function onConnected() {
     // Subscribe to the Public Topic
     stompClient.subscribe('/topic/public', onMessageReceived);
 
+
     // Tell your username to the server
+    var generateId = generateRandomString(8);
     stompClient.send("/app/chat.addUser",
         {},
-        JSON.stringify({sender: username, type: 'JOIN'})
+        JSON.stringify({userId: generateId, sender: username, type: 'JOIN'})
     )
 
     connectingElement.classList.add('hidden');
@@ -66,6 +68,17 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
+function generateRandomString(length) {
+  const characterSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomString = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characterSet.length);
+    randomString += characterSet.charAt(randomIndex);
+  }
+
+  return randomString;
+}
 
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
@@ -76,6 +89,7 @@ function onMessageReceived(payload) {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' joined!';
     } else if (message.type === 'LEAVE') {
+        stompClient.send("/app/chat.removeUser", {}, payload.body);
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';
     } else {
