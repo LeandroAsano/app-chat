@@ -36,6 +36,10 @@ function onConnected() {
     // Subscribe to the Public Topic
     stompClient.subscribe('/topic/public', onMessageReceived);
 
+    // Subscribe to userlist topic
+    stompClient.subscribe('/topic/userList', manageUserList);
+    console.log(manageUserList)
+
 
     // Tell your username to the server
     var generateId = generateRandomString(8);
@@ -47,12 +51,29 @@ function onConnected() {
     connectingElement.classList.add('hidden');
 }
 
+function manageUserList (userList) {
+    var userListEl = document.querySelector("#userList");
+
+    // Parse the JSON string received from the server
+    var users = JSON.parse(userList.body);
+
+    // Clean Users List
+    while (userListEl.firstChild) {
+        userListEl.removeChild(userListEl.firstChild);
+    }
+
+    Object.values(users).forEach(user => {
+        var listItem = document.createElement('li');
+
+        listItem.textContent = user.username;
+        userListEl.appendChild(listItem)
+    });
+}
 
 function onError(error) {
     connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
     connectingElement.style.color = 'red';
 }
-
 
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
