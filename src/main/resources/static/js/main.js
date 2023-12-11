@@ -58,11 +58,18 @@ function manageUserList (userList) {
     var users = JSON.parse(userList.body);
 
     // Clean Users List
+    console.log("borrando users");
     while (userListEl.firstChild) {
         userListEl.removeChild(userListEl.firstChild);
     }
 
+    //add all users
+    console.log("add all users");
+    var cont = 0;
     Object.values(users).forEach(user => {
+        cont++;
+        console.log (" valor de user " + cont + ": " + user.username);
+
         var listItem = document.createElement('li');
 
         listItem.textContent = user.username;

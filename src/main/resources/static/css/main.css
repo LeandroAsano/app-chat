@@ -21,19 +21,6 @@ body {
     height: 100%;
 }
 
-#messageArea {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    border-right: 1px solid #ccc;
-}
-
-#userList {
-    width: 200px;
-    padding: 20px;
-    background-color: #f0f0f0;
-}
-
 .clearfix:after {
     display: block;
     content: "";
@@ -141,11 +128,15 @@ button.accent {
 }
 
 .chat-container {
-    display: flex;
     max-width: 700px;
-    margin: 30px auto 0;
+    margin-left: auto;
+    margin-right: auto;
     background-color: #fff;
     box-shadow: 0 1px 11px rgba(0, 0, 0, 0.27);
+    margin-top: 30px;
+    height: calc(100% - 60px);
+    max-height: 600px;
+    position: relative;
 }
 
 #chat-page ul {
@@ -293,4 +284,4 @@ button.accent {
     .chat-header h2 {
         font-size: 1.1em;
     }
-}
+}}
