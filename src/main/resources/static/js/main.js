@@ -142,9 +142,16 @@ function refreshUserList (userList) {
         cont++;
         console.log (" valor de user " + cont + ": " + user.username);
 
+        let statusIcon = document.createElement('img');
         let listItem = document.createElement('li');
+        let textItem = document.createElement('p');
 
-        listItem.textContent = user.username;
+        statusIcon.src = '../images/online-icon.png';
+        statusIcon.classList.add('user-status-icon');
+        textItem.textContent = user.username;
+
+        listItem.appendChild(statusIcon);
+        listItem.appendChild(textItem);
         userListEl.appendChild(listItem)
     });
 }
