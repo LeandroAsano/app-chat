@@ -1,9 +1,8 @@
 package app.chat.chat;
 
-import app.chat.model.Status;
 import app.chat.model.User;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 

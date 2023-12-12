@@ -32,7 +32,7 @@ function getStatusValue(statusName) {
 
 function connect(event) {
     username = document.querySelector('#name').value.trim();
-    status = 'ONLINE';
+    status = "ONLINE";
 
     if(username) {
         usernamePage.classList.add('hidden');
@@ -104,13 +104,11 @@ function onMessageReceived(payload) {
         usernameElement.appendChild(usernameText);
         messageElement.appendChild(usernameElement);
     }
-
     var textElement = document.createElement('p');
     var messageText = document.createTextNode(message.content);
+
     textElement.appendChild(messageText);
-
     messageElement.appendChild(textElement);
-
     messageArea.appendChild(messageElement);
     messageArea.scrollTop = messageArea.scrollHeight;
 }

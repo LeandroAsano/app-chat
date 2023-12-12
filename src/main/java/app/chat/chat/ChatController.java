@@ -27,11 +27,8 @@ public class ChatController {
 
     @MessageMapping("/chat.addUser")
     @SendTo("/topic/public")
-    public ChatMessage addUser(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    public ChatMessage addUser(@Payload ChatMessage chatMessage) {
         User user = new User(chatMessage.getUserId(), chatMessage.getSender(), Status.ONLINE);
-
-        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("userId", user.getId());
-        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("username", user.getUsername());
 
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " added");
         userService.addUser(user);
@@ -39,9 +36,7 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.putUser")
-    public void putUser(@Payload User user, SimpMessageHeaderAccessor headerAccessor) {
-        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("status", user.getStatus());
-
+    public void putUser(@Payload User user) {
         log.info("User Status Changed to " + user.getStatus());
         userService.changeStatus(user);
     }
