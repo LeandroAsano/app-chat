@@ -9,7 +9,9 @@ var messageArea = document.querySelector('#messageArea');
 var connectingElement = document.querySelector('.connecting');
 
 var stompClient = null;
+var userId = null;
 var username = null;
+var userList = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -31,50 +33,18 @@ function connect(event) {
     event.preventDefault();
 }
 
-
 function onConnected() {
-    // Subscribe to the Public Topic
     stompClient.subscribe('/topic/public', onMessageReceived);
-
-    // Subscribe to userlist topic
-    stompClient.subscribe('/topic/userList', manageUserList);
-    console.log(manageUserList)
-
+    stompClient.subscribe('/topic/userList', refreshUserList);
 
     // Tell your username to the server
-    var generateId = generateRandomString(8);
+    userId = generateRandomString(8);
     stompClient.send("/app/chat.addUser",
         {},
-        JSON.stringify({userId: generateId, sender: username, type: 'JOIN'})
+        JSON.stringify({userId: userId, sender: username, type: 'JOIN'})
     )
 
     connectingElement.classList.add('hidden');
-}
-
-function manageUserList (userList) {
-    var userListEl = document.querySelector("#userList");
-
-    // Parse the JSON string received from the server
-    var users = JSON.parse(userList.body);
-
-    // Clean Users List
-    console.log("borrando users");
-    while (userListEl.firstChild) {
-        userListEl.removeChild(userListEl.firstChild);
-    }
-
-    //add all users
-    console.log("add all users");
-    var cont = 0;
-    Object.values(users).forEach(user => {
-        cont++;
-        console.log (" valor de user " + cont + ": " + user.username);
-
-        var listItem = document.createElement('li');
-
-        listItem.textContent = user.username;
-        userListEl.appendChild(listItem)
-    });
 }
 
 function onError(error) {
@@ -110,14 +80,13 @@ function generateRandomString(length) {
 
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
-
     var messageElement = document.createElement('li');
 
     if(message.type === 'JOIN') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' joined!';
     } else if (message.type === 'LEAVE') {
-        stompClient.send("/app/chat.removeUser", {}, payload.body);
+        //stompClient.send("/app/chat.removeUser", {}, payload.body);
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';
     } else {
@@ -148,13 +117,54 @@ function onMessageReceived(payload) {
 
 
 function getAvatarColor(messageSender) {
-    var hash = 0;
+    let hash = 0;
     for (var i = 0; i < messageSender.length; i++) {
         hash = 31 * hash + messageSender.charCodeAt(i);
     }
-    var index = Math.abs(hash % colors.length);
+    let index = Math.abs(hash % colors.length);
     return colors[index];
+}
+
+function refreshUserList (userList) {
+    let userListEl = document.querySelector("#userList");
+
+    // Parse the JSON string received from the server
+    userList = JSON.parse(userList.body);
+
+    // Clean Users List
+    while (userListEl.firstChild) {
+        userListEl.removeChild(userListEl.firstChild);
+    }
+
+    //add all users
+    let cont = 0;
+    Object.values(userList).forEach(user => {
+        cont++;
+        console.log (" valor de user " + cont + ": " + user.username);
+
+        let listItem = document.createElement('li');
+
+        listItem.textContent = user.username;
+        userListEl.appendChild(listItem)
+    });
+}
+
+function handleDisconnect(event) {
+    stompClient.send("/app/chat.removeUser",
+    {},
+    JSON.stringify({userId: userId, sender: username, type: 'LEAVE'}));
+}
+
+function handleSwitchTab(event) {
+    if (document.hidden) {
+        //Status Logic User Away
+    } else {
+        //Status Logic User back Online
+    }
+
 }
 
 usernameForm.addEventListener('submit', connect, true)
 messageForm.addEventListener('submit', sendMessage, true)
+window.addEventListener('beforeunload', handleDisconnect, true)
+window.addEventListener('visibilitychange', handleSwitchTab, true)
