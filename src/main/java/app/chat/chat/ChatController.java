@@ -38,6 +38,14 @@ public class ChatController {
         return chatMessage;
     }
 
+    @MessageMapping("/chat.putUser")
+    public void putUser(@Payload User user, SimpMessageHeaderAccessor headerAccessor) {
+        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("status", user.getStatus());
+
+        log.info("User Status Changed to " + user.getStatus());
+        userService.changeStatus(user);
+    }
+
     @MessageMapping("/chat.removeUser")
     public void removeUser(@Payload ChatMessage chatMessage) {
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " removed");

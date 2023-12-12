@@ -1,5 +1,6 @@
 package app.chat.chat;
 
+import app.chat.model.Status;
 import app.chat.model.User;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,11 @@ public class UserService {
 
     public void addUser(User user) {
         userMap.put(user.getId(), user);
+        broadcastUserList();
+    }
+
+    public void changeStatus(User user) {
+        userMap.get(user.getId()).setStatus(user.getStatus());
         broadcastUserList();
     }
 

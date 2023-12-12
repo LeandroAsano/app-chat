@@ -12,14 +12,27 @@ var stompClient = null;
 var userId = null;
 var username = null;
 var userList = null;
+var status = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
     '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
 ];
 
+const Status = {
+    ONLINE: 'online-icon.png',
+    AWAY: 'away-icon.png',
+    BUSY: 'busy-icon.png',
+    OFFLINE: 'offline-icon.png'
+};
+
+function getStatusValue(statusName) {
+  return Status[statusName] || null;
+}
+
 function connect(event) {
     username = document.querySelector('#name').value.trim();
+    status = 'ONLINE';
 
     if(username) {
         usernamePage.classList.add('hidden');
@@ -66,18 +79,6 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
-function generateRandomString(length) {
-  const characterSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let randomString = '';
-
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characterSet.length);
-    randomString += characterSet.charAt(randomIndex);
-  }
-
-  return randomString;
-}
-
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
     var messageElement = document.createElement('li');
@@ -86,7 +87,6 @@ function onMessageReceived(payload) {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' joined!';
     } else if (message.type === 'LEAVE') {
-        //stompClient.send("/app/chat.removeUser", {}, payload.body);
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';
     } else {
@@ -115,16 +115,6 @@ function onMessageReceived(payload) {
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
-
-function getAvatarColor(messageSender) {
-    let hash = 0;
-    for (var i = 0; i < messageSender.length; i++) {
-        hash = 31 * hash + messageSender.charCodeAt(i);
-    }
-    let index = Math.abs(hash % colors.length);
-    return colors[index];
-}
-
 function refreshUserList (userList) {
     let userListEl = document.querySelector("#userList");
 
@@ -140,13 +130,12 @@ function refreshUserList (userList) {
     let cont = 0;
     Object.values(userList).forEach(user => {
         cont++;
-        console.log (" valor de user " + cont + ": " + user.username);
 
         let statusIcon = document.createElement('img');
         let listItem = document.createElement('li');
         let textItem = document.createElement('p');
 
-        statusIcon.src = '../images/online-icon.png';
+        statusIcon.src = "./images/" + getStatusValue(user.status);
         statusIcon.classList.add('user-status-icon');
         textItem.textContent = user.username;
 
@@ -163,11 +152,10 @@ function handleDisconnect(event) {
 }
 
 function handleSwitchTab(event) {
-    if (document.hidden) {
-        //Status Logic User Away
-    } else {
-        //Status Logic User back Online
-    }
+    status = (document.hidden) ? "AWAY" : "ONLINE";
+    stompClient.send("/app/chat.putUser",
+            {},
+            JSON.stringify({id: userId, username: username, status: status}));
 
 }
 
