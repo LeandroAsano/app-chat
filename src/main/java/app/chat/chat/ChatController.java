@@ -27,20 +27,28 @@ public class ChatController {
 
     @MessageMapping("/chat.addUser")
     @SendTo("/topic/public")
-    public ChatMessage addUser(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    public ChatMessage addUser(@Payload ChatMessage chatMessage) {
         User user = new User(chatMessage.getUserId(), chatMessage.getSender(), Status.ONLINE);
-
-        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("userId", user.getId());
-        Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("username", user.getUsername());
 
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " added");
         userService.addUser(user);
+        userService.broadcastUserList();
         return chatMessage;
+    }
+
+    @MessageMapping("/chat.putUser")
+    public void putUser(@Payload User user) {
+        log.info("User Status Changed to " + user.getStatus());
+        userService.changeStatus(user);
+        userService.broadcastUserList();
     }
 
     @MessageMapping("/chat.removeUser")
     public void removeUser(@Payload ChatMessage chatMessage) {
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " removed");
-        userService.removeUser(chatMessage.getUserId());
+        userService.setOfflineUser(chatMessage.getUserId());
+        userService.broadcastUserList();
+
+        //TODO: implement waiting max 30min before remove the user with a thread
     }
 }
