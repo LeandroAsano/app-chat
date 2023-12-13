@@ -41,6 +41,7 @@ public class UserService {
     }
 
     public void broadcastUserList(){
+        System.out.println(getOnlineUsers());
         messageTemplate.convertAndSend("/topic/userList", getOnlineUsers());
     }
 

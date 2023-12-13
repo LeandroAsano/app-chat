@@ -36,6 +36,15 @@ public class ChatController {
         return chatMessage;
     }
 
+    @MessageMapping("/chat.getUser")
+    @SendTo("/topic/oldUser")
+    public User getUser(@Payload String userId) {
+        User user = userService.getUser(userId);
+        log.info("Existent User Found: " + user.getStatus());
+        userService.broadcastUserList();
+        return user;
+    }
+
     @MessageMapping("/chat.putUser")
     public void putUser(@Payload User user) {
         log.info("User Status Changed to " + user.getStatus());
