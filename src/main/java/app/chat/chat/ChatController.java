@@ -32,6 +32,7 @@ public class ChatController {
 
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " added");
         userService.addUser(user);
+        userService.broadcastUserList();
         return chatMessage;
     }
 
@@ -39,11 +40,15 @@ public class ChatController {
     public void putUser(@Payload User user) {
         log.info("User Status Changed to " + user.getStatus());
         userService.changeStatus(user);
+        userService.broadcastUserList();
     }
 
     @MessageMapping("/chat.removeUser")
     public void removeUser(@Payload ChatMessage chatMessage) {
         log.info("User: " + chatMessage.getSender() + " id: " + chatMessage.getUserId() + " removed");
-        userService.removeUser(chatMessage.getUserId());
+        userService.setOfflineUser(chatMessage.getUserId());
+        userService.broadcastUserList();
+
+        //TODO: implement waiting max 30min before remove the user with a thread
     }
 }

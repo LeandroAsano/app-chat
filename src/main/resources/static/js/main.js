@@ -13,6 +13,7 @@ var userId = null;
 var username = null;
 var userList = null;
 var status = null;
+var isRefreshing = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -125,39 +126,53 @@ function refreshUserList (userList) {
     }
 
     //add all users
-    let cont = 0;
     Object.values(userList).forEach(user => {
-        cont++;
-
         let statusIcon = document.createElement('img');
         let listItem = document.createElement('li');
-        let textItem = document.createElement('p');
+        let usernameItem = document.createElement('p');
+        let statusValue = getStatusValue(user.status);
 
-        statusIcon.src = "./images/" + getStatusValue(user.status);
+        statusIcon.src = "./images/" + statusValue;
         statusIcon.classList.add('user-status-icon');
-        textItem.textContent = user.username;
+        usernameItem.textContent = user.username;
 
         listItem.appendChild(statusIcon);
-        listItem.appendChild(textItem);
+        listItem.appendChild(usernameItem);
+
+        if (user.status == "OFFLINE") {
+            let lastOnlineItem = document.createElement('p');
+
+            lastOnlineItem.classList.add('last-time-online');
+            lastOnlineItem.textContent = "Last Seen: " + parseDate(user.lastTimeOnline);
+            listItem.appendChild(lastOnlineItem);
+        }
         userListEl.appendChild(listItem)
     });
 }
 
 function handleDisconnect(event) {
+    isRefreshing = true;
+    status = "OFFLINE";
     stompClient.send("/app/chat.removeUser",
     {},
     JSON.stringify({userId: userId, sender: username, type: 'LEAVE'}));
 }
 
 function handleSwitchTab(event) {
-    status = (document.hidden) ? "AWAY" : "ONLINE";
-    stompClient.send("/app/chat.putUser",
+    if (!isRefreshing) {
+        status = (document.hidden) ? "AWAY" : "ONLINE";
+        stompClient.send("/app/chat.putUser",
             {},
             JSON.stringify({id: userId, username: username, status: status}));
+    }
+}
 
+function handleRefresh(event) {
+    isRefreshing = false;
 }
 
 usernameForm.addEventListener('submit', connect, true)
 messageForm.addEventListener('submit', sendMessage, true)
 window.addEventListener('beforeunload', handleDisconnect, true)
 window.addEventListener('visibilitychange', handleSwitchTab, true)
+window.addEventListener('load', handleRefresh, true);
