@@ -31,34 +31,76 @@ function getStatusValue(statusName) {
   return Status[statusName] || null;
 }
 
-function connect(event) {
-    username = document.querySelector('#name').value.trim();
-    status = "ONLINE";
+function autoConnect(event) {
+    const userIdCookie = document.cookie.split('; ').find(row => row.startsWith('userId='));;
+    const userIdValue = userIdCookie ? userIdCookie.split('=')[1] : null;
 
-    if(username) {
+    if (userIdValue) {
+      // User is returning
+      console.log("old");
+      userId = userIdCookie.split('=')[1];
+
+      usernamePage.classList.add('hidden');
+      chatPage.classList.remove('hidden');
+
+      var socket = new SockJS('/ws');
+      stompClient = Stomp.over(socket);
+
+      stompClient.connect({}, onOldConnection, onError);
+    }
+
+    connectingElement.classList.add('hidden');
+}
+
+function connect(event) {
+    // User is new
+    userId = generateRandomCookie(6);
+    document.cookie = setCookie("userId", userId, 1);
+    username = document.querySelector('#name').value.trim();
+
+    if (username) {
+        status = "ONLINE";
+
         usernamePage.classList.add('hidden');
         chatPage.classList.remove('hidden');
 
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
 
-        stompClient.connect({}, onConnected, onError);
+        stompClient.connect({}, onNewConnection, onError);
     }
     event.preventDefault();
+
+    connectingElement.classList.add('hidden');
 }
 
-function onConnected() {
+function onOldConnection() {
+    stompClient.subscribe('/topic/public', onMessageReceived);
+    stompClient.subscribe('/topic/userList', refreshUserList);
+    stompClient.subscribe('/topic/oldUser', getOldUser);
+
+    stompClient.send("/app/chat.getUser", {}, userId);
+}
+
+function getOldUser(payload) {
+    var oldUser = JSON.parse(payload.body);
+    status = "ONLINE";
+    username = oldUser.username;
+
+    stompClient.send("/app/chat.putUser",
+                {},
+                JSON.stringify({id: userId, username: username, status: status}));
+}
+
+function onNewConnection() {
     stompClient.subscribe('/topic/public', onMessageReceived);
     stompClient.subscribe('/topic/userList', refreshUserList);
 
     // Tell your username to the server
-    userId = generateRandomString(8);
     stompClient.send("/app/chat.addUser",
         {},
         JSON.stringify({userId: userId, sender: username, type: 'JOIN'})
     )
-
-    connectingElement.classList.add('hidden');
 }
 
 function onError(error) {
@@ -151,6 +193,7 @@ function refreshUserList (userList) {
 }
 
 function handleDisconnect(event) {
+    console.log("disconnect triggered");
     isRefreshing = true;
     status = "OFFLINE";
     stompClient.send("/app/chat.removeUser",
@@ -159,6 +202,7 @@ function handleDisconnect(event) {
 }
 
 function handleSwitchTab(event) {
+    console.log("switch tab triggered");
     if (!isRefreshing) {
         status = (document.hidden) ? "AWAY" : "ONLINE";
         stompClient.send("/app/chat.putUser",
@@ -168,11 +212,13 @@ function handleSwitchTab(event) {
 }
 
 function handleRefresh(event) {
+    console.log("load triggered");
     isRefreshing = false;
 }
 
-usernameForm.addEventListener('submit', connect, true)
-messageForm.addEventListener('submit', sendMessage, true)
-window.addEventListener('beforeunload', handleDisconnect, true)
-window.addEventListener('visibilitychange', handleSwitchTab, true)
-window.addEventListener('load', handleRefresh, true);
+window.addEventListener('DOMContentLoaded', autoConnect, false);
+usernameForm.addEventListener('submit', connect, true);
+messageForm.addEventListener('submit', sendMessage, true);
+window.addEventListener('beforeunload', handleDisconnect, false);
+window.addEventListener('visibilitychange', handleSwitchTab, false);
+window.addEventListener('load', handleRefresh, false);
