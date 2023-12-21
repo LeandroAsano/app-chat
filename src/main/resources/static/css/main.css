@@ -239,15 +239,9 @@ button.accent {
     width: 100%;
 }
 
-li img,p {
-    display: inline-block;
-}
-
-
 .user-status-icon {
-    margin-right: 5px;
+    margin-left: 5px;
 }
-
 
 @media screen and (max-width: 730px) {
 

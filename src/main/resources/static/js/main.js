@@ -180,7 +180,7 @@ function refreshUserList (userList) {
         statusIcon.classList.add('user-status-icon');
         usernameItem.textContent = user.username;
 
-        listItem.appendChild(statusIcon);
+        usernameItem.appendChild(statusIcon);
         listItem.appendChild(usernameItem);
 
         if (user.status == "OFFLINE") {
