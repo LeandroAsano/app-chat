@@ -1,5 +1,7 @@
 'use strict';
 
+const IMAGES_PATH = "./images/";
+
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -174,11 +176,11 @@ function refreshUserList (userList) {
         let usernameItem = document.createElement('p');
         let statusValue = getStatusValue(user.status);
 
-        statusIcon.src = "./images/" + statusValue;
+        statusIcon.src = IMAGES_PATH + statusValue;
         statusIcon.classList.add('user-status-icon');
         usernameItem.textContent = user.username;
 
-        listItem.appendChild(statusIcon);
+        usernameItem.appendChild(statusIcon);
         listItem.appendChild(usernameItem);
 
         if (user.status == "OFFLINE") {
@@ -217,8 +219,8 @@ function handleRefresh(event) {
 }
 
 window.addEventListener('DOMContentLoaded', autoConnect, false);
-usernameForm.addEventListener('submit', connect, true);
-messageForm.addEventListener('submit', sendMessage, true);
+usernameForm.addEventListener('submit', connect, false);
+messageForm.addEventListener('submit', sendMessage, false);
 window.addEventListener('beforeunload', handleDisconnect, false);
 window.addEventListener('visibilitychange', handleSwitchTab, false);
 window.addEventListener('load', handleRefresh, false);
