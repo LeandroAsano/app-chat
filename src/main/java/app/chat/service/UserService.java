@@ -1,7 +1,8 @@
-package app.chat.chat;
+package app.chat.service;
 
 import app.chat.model.Status;
 import app.chat.model.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -9,9 +10,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 @Service
+@Slf4j
 public class UserService {
 
     // Using a concurrent map for thread safety
@@ -41,7 +44,7 @@ public class UserService {
     }
 
     public void broadcastUserList(){
-        System.out.println(getOnlineUsers());
+        log.info("BROADCASTING LIST");
         messageTemplate.convertAndSend("/topic/userList", getOnlineUsers());
     }
 

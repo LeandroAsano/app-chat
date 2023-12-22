@@ -1,4 +1,4 @@
-package app.chat.chat;
+package app.chat.model;
 
 public enum MessageType {
 

@@ -39,7 +39,6 @@ function autoConnect(event) {
 
     if (userIdValue) {
       // User is returning
-      console.log("old");
       userId = userIdCookie.split('=')[1];
 
       usernamePage.classList.add('hidden');
@@ -195,7 +194,6 @@ function refreshUserList (userList) {
 }
 
 function handleDisconnect(event) {
-    console.log("disconnect triggered");
     isRefreshing = true;
     status = "OFFLINE";
     stompClient.send("/app/chat.removeUser",
@@ -204,7 +202,6 @@ function handleDisconnect(event) {
 }
 
 function handleSwitchTab(event) {
-    console.log("switch tab triggered");
     if (!isRefreshing) {
         status = (document.hidden) ? "AWAY" : "ONLINE";
         stompClient.send("/app/chat.putUser",
