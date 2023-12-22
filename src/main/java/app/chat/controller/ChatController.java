@@ -11,6 +11,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
+
 @Controller
 @Slf4j
 public class ChatController {
@@ -46,6 +48,12 @@ public class ChatController {
 
         log.info("Existent User Found: " + user.getStatus());
         return user;
+    }
+
+    @MessageMapping("/chat.getAllUsers")
+    @SendTo("/topic/userList")
+    public Map<String, User> getUsers() {
+        return userService.getOnlineUsers();
     }
 
     @MessageMapping("/chat.putUser")

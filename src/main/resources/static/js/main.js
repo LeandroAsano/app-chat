@@ -81,6 +81,7 @@ function onOldConnection() {
     stompClient.subscribe('/topic/oldUser', getOldUser);
 
     stompClient.send("/app/chat.getUser", {}, userId);
+    //stompClient.send("/app/chat.getAllUsers", {}, {});
 }
 
 function getOldUser(payload) {

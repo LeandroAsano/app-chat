@@ -7,20 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Slf4j
 @Service
 public class MapChangeListenerService {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-    private Map<String, User> usersMap = new HashMap<>();
     private ScheduledFuture<?> future;
+
+    private Map<String, User> snapshotMap = new ConcurrentHashMap<>();
     @Autowired
     private UserService userService;
     @Getter
@@ -28,16 +26,12 @@ public class MapChangeListenerService {
 
     @PostConstruct
     public void startMapChangeListener() {
-        // Schedule a task to run periodically
-        log.info("STARTING CHANGE MAP LISTENER");
         try {
             future = scheduledExecutorService.scheduleAtFixedRate(
-                    this::checkForChangesAndBroadcast, 0, 1, TimeUnit.SECONDS); // Adjust the time interval as needed
+                    this::checkForChangesAndBroadcast, 0, 1, TimeUnit.SECONDS);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
-                    log.info("Shutdown Listener");
-
                     if (future.cancel(true)) {
                         log.info("Task completely cancelled");
                     } else {
@@ -61,18 +55,82 @@ public class MapChangeListenerService {
     private void checkForChangesAndBroadcast() {
         log.info("Checking for changes...");
 
-        Map<String, User> currentMapState = new HashMap<>(userService.getOnlineUsers());
+        Map<String, User> currentMapState = userService.getOnlineUsers();
 
-        mapChanged = !currentMapState.equals(usersMap);
+        log.info("Current Map: ");
+        if (!currentMapState.isEmpty()){
+            userService.getOnlineUsers().values().forEach(u -> log.info(u.getUsername() + " " + u.getStatus().toString()));
+        }
 
-        log.info("Current Map: " + currentMapState);
-        log.info("Stored Map: " + usersMap);
+        log.info("Stored Map: ");
+        if (!snapshotMap.isEmpty()) {
+            snapshotMap.values().forEach(l -> log.info(l.getUsername() + " " + l.getStatus().toString() + " "));
+        }
+
+        mapChanged = isMapChanged(snapshotMap);
+
+        if (mapChanged){
+            waitForReCheck();
+
+            mapChanged = isMapChanged(snapshotMap);
+        }
 
         if (mapChanged) {
+            this.snapshotMap = new ConcurrentHashMap<>();
+
+            currentMapState = userService.getOnlineUsers();
+            currentMapState.forEach((key, user) -> {
+                try {
+                    snapshotMap.put(key, user.clone());
+                } catch (CloneNotSupportedException e) {
+                    log.error(Arrays.toString(e.getStackTrace()));
+                }
+            });
+
             userService.broadcastUserList();
-            usersMap = currentMapState;
             mapChanged = false;
         }
+    }
+
+    private static void waitForReCheck() {
+        try {
+            TimeUnit.MILLISECONDS.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean isMapChanged(Map<String, User> usersMap){
+        Map<String, User> currentMapState = userService.getOnlineUsers();
+
+        for (Map.Entry<String, User> entry : currentMapState.entrySet()) {
+            String key = entry.getKey();
+            User currentUser = entry.getValue();
+            User storedUser = usersMap.get(key);
+
+            if (storedUser == null) {
+                // Key is missing in modified map (removed)
+                log.info("Key '" + key + "' removed.");
+                return true;
+            } else if (!currentUser.equalsValue(storedUser)) {
+                // Value has changed
+                log.info("Key '" + key + "' changed from '"
+                        + currentUser + "' to '" + storedUser + "'.");
+                return true;
+            }
+        }
+
+        for (Map.Entry<String, User> entry : currentMapState.entrySet()) {
+            String key = entry.getKey();
+            User storedUser = entry.getValue();
+
+            if (!currentMapState.containsKey(key)) {
+                // Key is missing in original map (added)
+                log.info("Key '" + key + "' added with value '" + storedUser + "'.");
+                return true;
+            }
+        }
+        return false;
     }
 
 }
